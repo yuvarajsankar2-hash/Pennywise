@@ -148,7 +148,7 @@
         <form id="transaction-filter" class="filter-bar">
           ${dateInputMarkup("transaction-from", "From date", from)}
           ${dateInputMarkup("transaction-to", "To date", to)}
-          <div class="filter-actions"><button class="button button-primary" type="submit">Apply filter</button><button class="button button-secondary" type="button" id="clear-transaction-filter">Clear</button></div>
+          <div class="filter-actions"><button class="button button-primary" type="submit">Filter</button><button class="button button-secondary" type="button" id="clear-transaction-filter">Clear</button></div>
         </form>
         <div class="filter-summary"><span>${filtered.length} ${filtered.length === 1 ? "transaction" : "transactions"}${hasFilter ? " in selected date range" : ""}</span></div>
         ${transactionTable(pageItems, { filtered: hasFilter })}
