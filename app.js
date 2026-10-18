@@ -224,7 +224,7 @@
         <form id="dashboard-filter" class="filter-bar">
           ${dateInputMarkup("dashboard-from", "From date", from)}
           ${dateInputMarkup("dashboard-to", "To date", to)}
-          <div class="filter-actions"><button class="button button-primary" type="submit">Apply filter</button><button class="button button-secondary" type="button" id="reset-dashboard-filter">This month</button></div>
+          <div class="filter-actions"><button class="button button-primary" type="submit">Filter</button><button class="button button-secondary" type="button" id="reset-dashboard-filter">This month</button></div>
         </form>
       </section>
       <section class="summary-grid" style="margin-top:16px" aria-label="Selected period totals">
