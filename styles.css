@@ -80,19 +80,36 @@ button { cursor: pointer; }
 .profile-copy { display: grid; flex: 1; gap: 3px; min-width: 0; }
 .profile-copy strong { overflow: hidden; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
 .profile-copy span { overflow: hidden; color: #9da59e; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
-.icon-button { display: grid; place-items: center; width: 29px; height: 29px; border: 0; border-radius: 6px; color: #8d978e; background: transparent; }
-.icon-button:hover { color: var(--green); background: #f0f4ef; }
-.logout-button { font-size: 17px; transform: rotate(45deg); }
 .main-column { min-height: 100vh; margin-left: 244px; }
 .topbar { position: sticky; z-index: 4; top: 0; display: flex; align-items: center; justify-content: space-between; min-height: 70px; padding: 0 clamp(24px, 4vw, 54px); border-bottom: 1px solid #edf0eb; background: rgba(255,255,255,.94); backdrop-filter: blur(12px); }
 .breadcrumb { display: flex; align-items: center; gap: 10px; color: #a0a8a1; font-size: 11px; }
 .breadcrumb strong { color: #414b43; font-weight: 600; }
 .breadcrumb-slash { color: #d4d9d3; }
 .topbar-actions { display: flex; align-items: center; gap: 22px; }
+.account-menu { position: relative; }
+.account-menu-trigger { padding: 0; border: 0; cursor: pointer; }
+.account-menu-trigger:hover, .account-menu-trigger:focus-visible { outline: 2px solid #b8cbb4; outline-offset: 2px; }
+.account-menu-panel { position: absolute; z-index: 9; top: calc(100% + 12px); right: 0; width: 210px; padding: 7px; border: 1px solid var(--line); border-radius: 9px; background: white; box-shadow: 0 12px 32px rgba(37, 52, 40, .14); }
+.account-menu-heading { display: grid; gap: 3px; padding: 9px 10px 11px; border-bottom: 1px solid #eff1ee; }
+.account-menu-heading strong { overflow: hidden; color: var(--ink); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.account-menu-heading span { overflow: hidden; color: #929b93; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.account-menu-item { width: 100%; padding: 10px; border: 0; border-radius: 6px; color: #59645b; background: transparent; text-align: left; font-size: 11px; }
+.account-menu-item:hover, .account-menu-item:focus-visible { outline: none; color: var(--green); background: #f2f6f1; }
+.account-menu-logout { color: #b45e4d; }
+.password-dialog { width: min(440px, calc(100% - 32px)); max-width: none; padding: 0; border: 1px solid var(--line); border-radius: 12px; color: var(--ink); background: white; box-shadow: 0 24px 70px rgba(24, 35, 27, .25); }
+.password-dialog::backdrop { background: rgba(28, 40, 31, .42); backdrop-filter: blur(2px); }
+.password-dialog-form { padding: 25px; }
+.dialog-heading { margin-bottom: 20px; }
+.dialog-heading h2 { margin: 7px 0 5px; font: 700 20px "Manrope", sans-serif; letter-spacing: -.6px; }
+.dialog-heading p { margin: 0; color: var(--muted); font-size: 11px; }
+.password-dialog .form-field { margin-bottom: 13px; }
+.password-dialog .form-field input { width: 100%; height: 40px; padding: 0 11px; border: 1px solid #e6eae4; border-radius: 7px; outline: none; color: #465047; font-size: 11px; }
+.password-dialog .form-field input:focus { border-color: #91a891; box-shadow: 0 0 0 3px rgba(69,108,80,.07); }
+.password-dialog .form-error { margin: 0 0 8px; }
+.dialog-actions { flex-wrap: wrap; }
+.dialog-actions .button { min-height: 39px; font-size: 10px; }
 .today-label { display: flex; align-items: center; gap: 7px; color: #8e9890; font-size: 10px; }
 .status-dot { width: 6px; height: 6px; border-radius: 50%; background: #8daf83; }
-.add-top-button { min-height: 36px; padding: 0 13px; font-size: 11px; }
-.add-top-button span { font-size: 16px; }
 .content-area { width: min(100%, 1220px); min-height: calc(100vh - 117px); margin: 0 auto; padding: 36px clamp(24px, 4vw, 54px) 30px; }
 .page-footer { display: flex; justify-content: space-between; gap: 12px; padding: 16px clamp(24px, 4vw, 54px) 21px; color: #a1a9a1; font-size: 9px; }
 .footer-heart { color: #c77e62; }
@@ -232,7 +249,6 @@ button { cursor: pointer; }
   .main-column { margin-left: 0; padding-bottom: 65px; }
   .topbar { min-height: 59px; padding: 0 17px; }
   .today-label { display: none; }
-  .add-top-button { min-height: 33px; padding: 0 10px; font-size: 10px; }
   .content-area { min-height: calc(100vh - 130px); padding: 25px 16px 23px; }
   .page-footer { padding: 13px 16px; font-size: 8px; }
   .summary-grid { grid-template-columns: 1fr; gap: 9px; }

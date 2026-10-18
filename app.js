@@ -326,7 +326,12 @@
   function updateShell() {
     $("#profile-name").textContent = currentUser.fullName;
     $("#profile-email").textContent = currentUser.email;
-    $("#profile-avatar").textContent = currentUser.fullName.trim().charAt(0).toUpperCase();
+    const initial = currentUser.username.trim().charAt(0).toUpperCase();
+    $("#profile-avatar").textContent = initial;
+    $("#account-menu-button").textContent = initial;
+    $("#account-menu-button").setAttribute("aria-label", `Account options for ${currentUser.fullName}`);
+    $("#menu-profile-name").textContent = currentUser.fullName;
+    $("#menu-profile-username").textContent = `@${currentUser.username}`;
     $("#topbar-date").textContent = formatLongDate();
   }
 
@@ -386,6 +391,20 @@
     const button = $('button[type="submit"]', form);
     button.disabled = busy;
     button.style.opacity = busy ? ".65" : "";
+  }
+
+  function closeAccountMenu() {
+    $("#account-menu-panel").hidden = true;
+    $("#account-menu-button").setAttribute("aria-expanded", "false");
+  }
+
+  function logOut() {
+    localStorage.removeItem(SESSION_KEY);
+    currentUser = null;
+    appShell.hidden = true;
+    authScreen.hidden = false;
+    closeAccountMenu();
+    showAuthView("login");
   }
 
   $("#login-form").addEventListener("submit", async event => {
@@ -453,19 +472,73 @@
   });
 
   $$("[data-auth-view]").forEach(button => button.addEventListener("click", () => showAuthView(button.dataset.authView)));
+  $("#account-menu-button").addEventListener("click", () => {
+    const panel = $("#account-menu-panel");
+    const isOpening = panel.hidden;
+    panel.hidden = !isOpening;
+    $("#account-menu-button").setAttribute("aria-expanded", String(isOpening));
+  });
+  $("#change-password-button").addEventListener("click", () => {
+    closeAccountMenu();
+    $("#password-error").textContent = "";
+    $("#password-form").reset();
+    $("#password-dialog").showModal();
+    $("#current-password").focus();
+  });
+  $("#cancel-password-button").addEventListener("click", () => $("#password-dialog").close());
+  $("#password-dialog").addEventListener("close", () => {
+    $("#password-form").reset();
+    $("#password-error").textContent = "";
+  });
+  $("#password-form").addEventListener("submit", async event => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const error = $("#password-error");
+    error.textContent = "";
+    setFormBusy(form, true);
+    try {
+      const currentPassword = form.elements.currentPassword.value;
+      const newPassword = form.elements.newPassword.value;
+      const confirmPassword = form.elements.confirmPassword.value;
+      if (newPassword.length < 8) {
+        error.textContent = "Your new password must be at least 8 characters.";
+        return;
+      }
+      if (newPassword !== confirmPassword) {
+        error.textContent = "The new passwords do not match.";
+        return;
+      }
+      if (await hashPassword(currentPassword, currentUser.salt) !== currentUser.passwordHash) {
+        error.textContent = "Your current password is incorrect.";
+        return;
+      }
+      const previousSalt = currentUser.salt;
+      const previousHash = currentUser.passwordHash;
+      currentUser.salt = makeSalt();
+      currentUser.passwordHash = await hashPassword(newPassword, currentUser.salt);
+      try {
+        saveDatabase();
+      } catch (saveError) {
+        currentUser.salt = previousSalt;
+        currentUser.passwordHash = previousHash;
+        throw new Error(`Could not save your new password in this browser: ${saveError.message}`);
+      }
+      $("#password-dialog").close();
+      showMessage("Your password has been changed.");
+    } catch (changeError) {
+      error.textContent = changeError.message || "Could not change your password. Please try again.";
+    } finally {
+      setFormBusy(form, false);
+    }
+  });
+  $("#logout-button").addEventListener("click", logOut);
   document.addEventListener("click", event => {
+    if (!event.target.closest(".account-menu")) closeAccountMenu();
     const button = event.target.closest("[data-view]");
     if (button) {
       event.preventDefault();
       navigate(button.dataset.view);
     }
-  });
-  $("#logout-button").addEventListener("click", () => {
-    localStorage.removeItem(SESSION_KEY);
-    currentUser = null;
-    appShell.hidden = true;
-    authScreen.hidden = false;
-    showAuthView("login");
   });
 
   try {

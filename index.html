@@ -89,7 +89,6 @@
           <div class="profile-card">
             <div id="profile-avatar" class="avatar">P</div>
             <div class="profile-copy"><strong id="profile-name">Your account</strong><span id="profile-email"></span></div>
-            <button id="logout-button" class="icon-button logout-button" type="button" aria-label="Sign out" title="Sign out">↗</button>
           </div>
         </div>
       </aside>
@@ -99,6 +98,17 @@
           <div class="breadcrumb"><span>My space</span><span class="breadcrumb-slash">/</span><strong id="breadcrumb-current">Home</strong></div>
           <div class="topbar-actions">
             <span class="today-label"><span class="status-dot"></span><span id="topbar-date"></span></span>
+            <div class="account-menu">
+              <button id="account-menu-button" class="avatar account-menu-trigger" type="button" aria-label="Account options" aria-haspopup="true" aria-expanded="false" aria-controls="account-menu-panel">P</button>
+              <div id="account-menu-panel" class="account-menu-panel" hidden>
+                <div class="account-menu-heading">
+                  <strong id="menu-profile-name">Your account</strong>
+                  <span id="menu-profile-username"></span>
+                </div>
+                <button id="change-password-button" class="account-menu-item" type="button">Change password</button>
+                <button id="logout-button" class="account-menu-item account-menu-logout" type="button">Log out</button>
+              </div>
+            </div>
           </div>
         </header>
         <div id="app-message" class="app-message" role="status" aria-live="polite"></div>
@@ -106,5 +116,32 @@
         <footer class="page-footer"><span>Made for a little more peace of mind.</span><span>Your data stays in this browser <span class="footer-heart">♥</span></span></footer>
       </div>
     </div>
+    <dialog id="password-dialog" class="password-dialog" aria-labelledby="password-dialog-title">
+      <form id="password-form" class="password-dialog-form">
+        <div class="dialog-heading">
+          <span class="section-eyebrow">ACCOUNT SECURITY</span>
+          <h2 id="password-dialog-title">Change password</h2>
+          <p>Enter your current password, then choose a new one.</p>
+        </div>
+        <div class="form-field">
+          <label for="current-password">Current password</label>
+          <input id="current-password" name="currentPassword" type="password" autocomplete="current-password" required>
+        </div>
+        <div class="form-field">
+          <label for="new-password">New password</label>
+          <input id="new-password" name="newPassword" type="password" autocomplete="new-password" minlength="8" required>
+          <span class="field-hint">Use at least 8 characters.</span>
+        </div>
+        <div class="form-field">
+          <label for="confirm-password">Confirm new password</label>
+          <input id="confirm-password" name="confirmPassword" type="password" autocomplete="new-password" minlength="8" required>
+        </div>
+        <div id="password-error" class="form-error" role="alert"></div>
+        <div class="form-actions dialog-actions">
+          <button class="button button-primary" type="submit">Save new password</button>
+          <button id="cancel-password-button" class="button button-secondary" type="button">Cancel</button>
+        </div>
+      </form>
+    </dialog>
   </body>
 </html>
