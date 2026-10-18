@@ -1,42 +1,35 @@
 (() => {
   "use strict";
 
+  const DB_KEY = "pennywise-data-v1";
   const SESSION_KEY = "pennywise-session-v1";
-  const API_BASE = typeof window.PENNYWISE_API_URL === "string" ? window.PENNYWISE_API_URL.replace(/\/+$/, "") : "";
+  const ITERATIONS = 150000;
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
   const authScreen = $("#auth-screen");
   const appShell = $("#app-shell");
   const content = $("#view-content");
+  let database;
   let currentUser;
-  let transactions = [];
-  let accessToken = null;
   let currentView = "home";
   let transactionPage = 1;
   let messageTimeout;
 
-  async function apiRequest(path, options = {}) {
-    const headers = { "Content-Type": "application/json", ...options.headers };
-    const token = options.token || accessToken;
-    if (token) headers["X-Session-Token"] = token;
-    let response;
-    try {
-      response = await fetch(`${API_BASE}/api${path}`, {
-        method: options.method || "GET",
-        headers,
-        body: options.body ? JSON.stringify(options.body) : undefined
-      });
-    } catch {
-      throw new Error("Could not reach the database API. Check its deployment URL and your connection.");
+  function loadDatabase() {
+    const stored = localStorage.getItem(DB_KEY);
+    if (!stored) return { users: [], transactions: {} };
+    const parsed = JSON.parse(stored);
+    if (!parsed || !Array.isArray(parsed.users) || !parsed.transactions || typeof parsed.transactions !== "object") {
+      throw new Error("Saved browser data is not in the expected format. Clear this site's browser storage to start fresh.");
     }
-    let result;
-    try {
-      result = await response.json();
-    } catch {
-      throw new Error(`The API returned an unexpected response (${response.status}).`);
+    for (const user of parsed.users) {
+      if (!user.fullName && user.fullname) user.fullName = user.fullname;
     }
-    if (!response.ok) throw new Error(result.error || `Request failed (${response.status}).`);
-    return result;
+    return parsed;
+  }
+
+  function saveDatabase() {
+    localStorage.setItem(DB_KEY, JSON.stringify(database));
   }
 
   function escapeHtml(value) {
@@ -64,7 +57,7 @@
   }
 
   function getTransactions() {
-    return transactions;
+    return database.transactions[currentUser.username] || [];
   }
 
   function sortedTransactions(transactions = getTransactions()) {
@@ -310,14 +303,18 @@
         error.textContent = "Please enter an amount greater than zero.";
         return;
       }
+      const entry = {
+        id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        date, type: $("#expense-type").value, reason, amount: Math.round(amount * 100) / 100,
+        createdAt: new Date().toISOString()
+      };
+      if (!database.transactions[currentUser.username]) database.transactions[currentUser.username] = [];
+      database.transactions[currentUser.username].push(entry);
       try {
-        const result = await apiRequest("/transactions", {
-          method: "POST",
-          body: { date, type: $("#expense-type").value, reason, amount: Math.round(amount * 100) / 100 }
-        });
-        transactions.push(result.transaction);
+        saveDatabase();
       } catch (saveError) {
-        error.textContent = saveError.message;
+        database.transactions[currentUser.username].pop();
+        error.textContent = `Could not save your transaction in this browser: ${saveError.message}`;
         return;
       }
       form.reset();
@@ -356,11 +353,8 @@
     messageTimeout = setTimeout(() => element.classList.remove("visible"), 3800);
   }
 
-  async function showAuthenticatedApp(user, token = accessToken) {
-    accessToken = token;
+  function showAuthenticatedApp(user) {
     currentUser = user;
-    const result = await apiRequest("/transactions");
-    transactions = result.transactions;
     authScreen.hidden = true;
     appShell.hidden = false;
     updateShell();
@@ -373,6 +367,19 @@
     $("#register-form-panel").hidden = !isRegister;
     $("#login-error").textContent = "";
     $("#register-error").textContent = "";
+  }
+
+  async function hashPassword(password, salt) {
+    if (!globalThis.crypto?.subtle) throw new Error("Secure password hashing is unavailable. Open this site over HTTPS or on localhost.");
+    const encoder = new TextEncoder();
+    const keyMaterial = await crypto.subtle.importKey("raw", encoder.encode(password), "PBKDF2", false, ["deriveBits"]);
+    const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", salt: encoder.encode(salt), iterations: ITERATIONS, hash: "SHA-256" }, keyMaterial, 256);
+    return [...new Uint8Array(bits)].map(byte => byte.toString(16).padStart(2, "0")).join("");
+  }
+
+  function makeSalt() {
+    const bytes = crypto.getRandomValues(new Uint8Array(16));
+    return [...bytes].map(byte => byte.toString(16).padStart(2, "0")).join("");
   }
 
   function setFormBusy(form, busy) {
@@ -389,15 +396,15 @@
     setFormBusy(form, true);
     try {
       const username = form.elements.username.value.trim().toLowerCase();
-      const result = await apiRequest("/auth/login", {
-        method: "POST",
-        body: { username, password: form.elements.password.value }
-      });
-      await showAuthenticatedApp(result.user, result.token);
-      sessionStorage.setItem(SESSION_KEY, result.token);
+      const user = database.users.find(item => item.username === username);
+      if (!user || await hashPassword(form.elements.password.value, user.salt) !== user.passwordHash) {
+        error.textContent = "That username and password don't match. Please try again.";
+        return;
+      }
+      localStorage.setItem(SESSION_KEY, user.username);
       form.reset();
+      showAuthenticatedApp(user);
     } catch (loginError) {
-      accessToken = null;
       error.textContent = loginError.message || "Could not sign in. Please try again.";
     } finally {
       setFormBusy(form, false);
@@ -411,21 +418,34 @@
     error.textContent = "";
     setFormBusy(form, true);
     try {
-      const result = await apiRequest("/auth/register", {
-        method: "POST",
-        body: {
-          username: form.elements.username.value.trim(),
-          fullName: form.elements.fullname.value.trim(),
-          email: form.elements.email.value.trim(),
-          password: form.elements.password.value
-        }
-      });
-      await showAuthenticatedApp(result.user, result.token);
-      sessionStorage.setItem(SESSION_KEY, result.token);
+      const username = form.elements.username.value.trim().toLowerCase();
+      const fullName = form.elements.fullname.value.trim();
+      const email = form.elements.email.value.trim();
+      if (database.users.some(user => user.username === username)) {
+        error.textContent = "That username is already taken. Try another one.";
+        return;
+      }
+      if (database.users.some(user => user.email.toLowerCase() === email.toLowerCase())) {
+        error.textContent = "That email address is already registered.";
+        return;
+      }
+      const salt = makeSalt();
+      const passwordHash = await hashPassword(form.elements.password.value, salt);
+      const user = { username, fullName, email, salt, passwordHash };
+      database.users.push(user);
+      database.transactions[username] = [];
+      try {
+        saveDatabase();
+      } catch (saveError) {
+        database.users.pop();
+        delete database.transactions[username];
+        throw new Error(`Could not save your account in this browser: ${saveError.message}`);
+      }
+      localStorage.setItem(SESSION_KEY, user.username);
       form.reset();
+      showAuthenticatedApp(user);
       showMessage("Your account is ready. Welcome to Pennywise!");
     } catch (registerError) {
-      accessToken = null;
       error.textContent = registerError.message || "Could not create your account. Please try again.";
     } finally {
       setFormBusy(form, false);
@@ -441,35 +461,20 @@
     }
   });
   $("#logout-button").addEventListener("click", () => {
-    sessionStorage.removeItem(SESSION_KEY);
-    accessToken = null;
-    transactions = [];
+    localStorage.removeItem(SESSION_KEY);
     currentUser = null;
     appShell.hidden = true;
     authScreen.hidden = false;
     showAuthView("login");
   });
 
-  async function restoreSession() {
-    const storedToken = sessionStorage.getItem(SESSION_KEY);
-    if (!storedToken) {
-      if (!API_BASE && location.hostname.endsWith("github.io")) {
-        $("#storage-notice").textContent = "Set your deployed API URL in config.js to connect this GitHub Pages site to your database.";
-      }
-      return;
-    }
-    try {
-      accessToken = storedToken;
-      const result = await apiRequest("/auth/session");
-      await showAuthenticatedApp(result.user, storedToken);
-    } catch (error) {
-      sessionStorage.removeItem(SESSION_KEY);
-      accessToken = null;
-      if (!/session has expired|no longer exists/i.test(error.message)) {
-        $("#storage-notice").textContent = error.message;
-        $("#storage-notice").classList.add("form-error");
-      }
-    }
+  try {
+    database = loadDatabase();
+    const sessionUsername = localStorage.getItem(SESSION_KEY);
+    const sessionUser = database.users.find(user => user.username === sessionUsername);
+    if (sessionUser) showAuthenticatedApp(sessionUser);
+  } catch (error) {
+    $("#storage-notice").textContent = error.message;
+    $("#storage-notice").classList.add("form-error");
   }
-  restoreSession();
 })();
