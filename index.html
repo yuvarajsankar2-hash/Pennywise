@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f6f7f4">
+    <meta name="description" content="A calm, private space to track your personal spending and income.">
+    <title>Personal Expense Tracker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./styles.css">
+    <script src="./config.js"></script>
+    <script src="./app.js" defer></script>
+  </head>
+  <body>
+    <main id="auth-screen" class="auth-screen">
+      <section class="auth-art" aria-label="About the expense tracker">
+        <a class="brand brand-light" href="#" aria-label="Pennywise home">
+          <span class="brand-mark" aria-hidden="true">p.</span>
+          <span>pennywise</span>
+        </a>
+        <div class="art-copy">
+          <span class="eyebrow">A LITTLE MORE CLARITY</span>
+          <h1>Your money,<br>in a better place.</h1>
+          <p>A simple, thoughtful way to keep track of what comes in and what goes out.</p>
+        </div>
+        <div class="art-note">
+          <span class="note-sparkle" aria-hidden="true">✳</span>
+          <span>Small steps make a big difference.</span>
+        </div>
+        <div class="art-orb orb-one"></div>
+        <div class="art-orb orb-two"></div>
+      </section>
+      <section class="auth-panel">
+        <div class="auth-mobile-brand brand">
+          <span class="brand-mark" aria-hidden="true">p.</span><span>pennywise</span>
+        </div>
+        <div class="auth-form-wrap">
+          <div id="login-form-panel">
+            <span class="eyebrow muted-eyebrow">YOUR PERSONAL MONEY SPACE</span>
+            <h2>Welcome back</h2>
+            <p class="form-intro">Sign in to pick up right where you left off.</p>
+            <form id="login-form" class="auth-form">
+              <label for="login-username">Username</label>
+              <input id="login-username" name="username" autocomplete="username" required placeholder="e.g. alexm">
+              <label for="login-password">Password</label>
+              <input id="login-password" name="password" type="password" autocomplete="current-password" required placeholder="Enter your password">
+              <div id="login-error" class="form-error" role="alert"></div>
+              <button class="button button-primary button-wide" type="submit">Sign in <span aria-hidden="true">→</span></button>
+            </form>
+            <p class="auth-switch">New around here? <button type="button" class="text-button" data-auth-view="register">Create an account</button></p>
+          </div>
+          <div id="register-form-panel" hidden>
+            <span class="eyebrow muted-eyebrow">A FRESH START</span>
+            <h2>Create your account</h2>
+            <p class="form-intro">It only takes a moment to get organized.</p>
+            <form id="register-form" class="auth-form">
+              <label for="register-username">Username</label>
+              <input id="register-username" name="username" autocomplete="username" required minlength="3" maxlength="24" pattern="[A-Za-z0-9_.\-]+" placeholder="Choose a username">
+              <label for="register-fullname">Full name</label>
+              <input id="register-fullname" name="fullname" autocomplete="name" required maxlength="70" placeholder="How should we greet you?">
+              <label for="register-email">Email address</label>
+              <input id="register-email" name="email" type="email" autocomplete="email" required maxlength="254" placeholder="you@example.com">
+              <label for="register-password">Password</label>
+              <input id="register-password" name="password" type="password" autocomplete="new-password" required minlength="8" placeholder="At least 8 characters">
+              <div id="register-error" class="form-error" role="alert"></div>
+              <button class="button button-primary button-wide" type="submit">Create account <span aria-hidden="true">→</span></button>
+            </form>
+            <p class="auth-switch">Already have an account? <button type="button" class="text-button" data-auth-view="login">Sign in</button></p>
+          </div>
+          <p id="storage-notice" class="storage-notice">Your account and expenses are stored in your secure online database.</p>
+        </div>
+      </section>
+    </main>
+
+    <div id="app-shell" class="app-shell" hidden>
+      <aside class="sidebar">
+        <a class="brand sidebar-brand" href="#" data-view="home">
+          <span class="brand-mark" aria-hidden="true">p.</span><span>pennywise</span>
+        </a>
+        <div class="nav-label">MENU</div>
+        <nav class="main-nav" aria-label="Main navigation">
+          <button class="nav-item active" type="button" data-view="home"><span class="nav-icon">⌂</span>Home</button>
+          <button class="nav-item" type="button" data-view="dashboard"><span class="nav-icon">▦</span>Dashboard</button>
+          <button class="nav-item" type="button" data-view="transactions"><span class="nav-icon">↕</span>Transactions</button>
+        </nav>
+        <div class="sidebar-bottom">
+          <div class="sidebar-tip"><span class="tip-icon">✦</span><strong>Little by little</strong><p>Being mindful today makes room for the things you love tomorrow.</p></div>
+          <div class="profile-card">
+            <div id="profile-avatar" class="avatar">P</div>
+            <div class="profile-copy"><strong id="profile-name">Your account</strong><span id="profile-email"></span></div>
+            <button id="logout-button" class="icon-button logout-button" type="button" aria-label="Sign out" title="Sign out">↗</button>
+          </div>
+        </div>
+      </aside>
+
+      <div class="main-column">
+        <header class="topbar">
+          <div class="breadcrumb"><span>My space</span><span class="breadcrumb-slash">/</span><strong id="breadcrumb-current">Home</strong></div>
+          <div class="topbar-actions">
+            <span class="today-label"><span class="status-dot"></span><span id="topbar-date"></span></span>
+            <button class="button button-primary add-top-button" type="button" data-view="add"><span aria-hidden="true">＋</span> Add expense</button>
+          </div>
+        </header>
+        <div id="app-message" class="app-message" role="status" aria-live="polite"></div>
+        <main id="view-content" class="content-area"></main>
+        <footer class="page-footer"><span>Made for a little more peace of mind.</span><span>Your data is stored in your account <span class="footer-heart">♥</span></span></footer>
+      </div>
+    </div>
+  </body>
+</html>
